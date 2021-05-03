@@ -23,6 +23,10 @@ header h1 a {
     padding-top: 2rem;
 }
 
+.nav-right a {
+    padding-right: 2rem !important;
+}
+
 .post-entry {
     margin-bottom: 2rem;
 }

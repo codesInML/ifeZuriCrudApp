@@ -1,8 +1,24 @@
-{% extends "base.html" %}
-
-{% block content %}
-    <div class="post-entry">
-        <h2>{{ post.title }} </h2>
-        <p>{{ post.body }} </p>
-    </div>
-{% endblock content %}
+{% extends "base.html" %} {% block content %}
+<div class="post-entry">
+  <h2>{{ post.title }}</h2>
+  <p>{{ post.body }}</p>
+  <p>written by {{ post.author }}</p>
+</div>
+{% if post.author == user %}
+<a href="{% url 'post_update' post.id %}">Edit</a> <br />
+<br />
+<a href="{% url 'post_delete' post.id %}">Delete Post</a>
+{% endif %}
+<br />
+<br />
+<a href="{% url 'post_comment' post.id %}">Add comment</a>
+<br /><br />
+<hr />
+<h2>Comments...</h2>
+{% if not post.comments.all %} No comments Yet...
+<a href="{% url 'post_comment' post.id %}">Add One</a>
+{% else %} {% for comment in post.comments.all %}
+<strong>{{ comment.name }} - {{comment.date_added}}</strong>
+<p>{{ comment.body }}</p>
+<br /><br />
+{% endfor %} {% endif %} {% endblock content %}

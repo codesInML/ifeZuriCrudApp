@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from .models import Post
+from .models import Post, Comment
 
 class BlogTest(TestCase):
 
@@ -35,9 +35,58 @@ class BlogTest(TestCase):
         self.assertTemplateUsed(response, 'home.html')
 
     def test_post_detail_view(self):
+        login = self.client.login(username = 'testuser', password = 'secret')
         response = self.client.get('/post/1/')
         noResponse = self.client.get('/post/10000/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(noResponse.status_code, 404)
-        self.assertContains(response, 'A good title')
+        self.assertEqual(str(response.context['user']), 'testuser')
         self.assertTemplateUsed(response, 'post_detail.html')
+
+    def test_get_absolute_url(self):
+        self.assertEqual(self.post.get_absolute_url(), '/post/1/')
+
+    def test_post_create_view(self):
+        login = self.client.login(username = 'testuser', password = 'secret')
+        response = self.client.post(reverse('post_new'), {
+            'title': 'New title',
+            'body': 'New text',
+            'author': self.user.id,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Post.objects.last().title, 'New title')
+        self.assertEqual(Post.objects.last().body, 'New text')
+
+    def test_post_update_view(self):
+        login = self.client.login(username = 'testuser', password = 'secret')
+        response = self.client.post(reverse('post_update', args='1'), {
+            'title': 'Updated title',
+            'body': 'Updated body',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Post.objects.last().title, 'Updated title')
+        self.assertEqual(Post.objects.last().body, 'Updated body')
+
+    def test_post_delete_view(self):
+        response = self.client.post(reverse('post_delete', args='1'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_login_required_redirection(self):
+        response1 = self.client.get('/post/1/')
+        response2 = self.client.get('/post/new/')
+        self.assertRedirects(response1, f"{reverse('login')}?next=/post/1/")
+        self.assertRedirects(response2, f"{reverse('login')}?next=/post/new/")
+
+
+class CommentTest(BlogTest):
+
+    def test_view_uses_correct_templates(self):
+        login = self.client.login(username = 'testuser', password = 'secret')
+        response = self.client.get(reverse('post_comment', args = '1'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'post_comment.html')
+
+
+
+
+    
